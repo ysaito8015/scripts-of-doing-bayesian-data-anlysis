@@ -45,23 +45,60 @@ if ( nCores < 4 ) {
 # Functions for opening and saving graphics that operate the same for 
 # Windows and Macintosh and Linux operating systems. At least, that's the hope!
 
+#openGraph = function( width=7 , height=7 , mag=1.0 , ... ) {
+#  if ( .Platform$OS.type != "windows" ) { # Mac OS, Linux
+#    tryInfo = try( X11( width=width*mag , height=height*mag , type="cairo" , 
+#                        ... ) )
+#    if ( class(tryInfo)=="try-error" ) {
+#      lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
+#      graphics.off() 
+#      X11( width=width*mag , height=height*mag , type="cairo" , ... )
+#    }
+#  } else { # Windows OS
+#    tryInfo = try( windows( width=width*mag , height=height*mag , ... ) )
+#    if ( class(tryInfo)=="try-error" ) {
+#      lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
+#      graphics.off() 
+#      windows( width=width*mag , height=height*mag , ... )    
+#    }
+#  }
+#}
 openGraph = function( width=7 , height=7 , mag=1.0 , ... ) {
-  if ( .Platform$OS.type != "windows" ) { # Mac OS, Linux
-    tryInfo = try( X11( width=width*mag , height=height*mag , type="cairo" , 
-                        ... ) )
-    if ( class(tryInfo)=="try-error" ) {
-      lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
-      graphics.off() 
-      X11( width=width*mag , height=height*mag , type="cairo" , ... )
-    }
-  } else { # Windows OS
-    tryInfo = try( windows( width=width*mag , height=height*mag , ... ) )
-    if ( class(tryInfo)=="try-error" ) {
-      lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
-      graphics.off() 
-      windows( width=width*mag , height=height*mag , ... )    
-    }
-  }
+	if( class( try(RStudio.Version(),silent=TRUE) ) == "try-error" ) {
+		# Not in RStudio, use graphic windows
+		if ( .Platform$OS.type != "windows" ) { # Mac OS, Linux
+			if ( !(grepl("mac.binary", .Platform$pkgType ))) { # Linux
+				tryInfo = try( X11( width=width*mag , height=height*mag ,
+													 type="cairo" , ... ) )
+				if ( class(tryInfo)=="try-error" ) {
+					lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS IN R CONSOLE.\n")
+					graphics.off()
+					X11( width=width*mag , height=height*mag , type="cairo" , ... )
+				}
+			} else {
+				# Mac OS - use quartz device
+				tryInfo = try( quartz(width=width*mag , height=height*mag ,
+															... ) )
+				if ( class(tryInfo)=="try-error") {
+					if ( class(tryInfo)=="try-error" ) {
+						lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS IN R CONSOLE.\n")
+						graphics.off()
+						quartz( width=width*mag , height=height*mag , ... )
+					}
+				}
+			}
+		} else { # Windows OS
+			tryInfo = try( windows( width=width*mag , height=height*mag , ... ) )
+			if ( class(tryInfo)=="try-error" ) {
+				lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS IN R CONSOLE.\n")
+				graphics.off()
+				windows( width=width*mag , height=height*mag , ... )
+			}
+		}
+	} else {
+		# setup for RStudio
+		par( cex=0.7, ... )
+	}
 }
 
 saveGraph = function( file="saveGraphOutput" , type="pdf" , ... ) {
